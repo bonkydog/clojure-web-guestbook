@@ -1,6 +1,8 @@
 (ns hw.handler
-  (:use compojure.core)
-  (:require [compojure.handler :as handler]
+  (:require [compojure.core :refer :all]
+            [ring.middleware.session :refer [wrap-session]]
+            [ring.util.response :refer [redirect]]
+            [compojure.handler :as handler]
             [compojure.route :as route]
             [ring.adapter.jetty :as jetty]
             [clojure.java.jdbc :as sql]
@@ -23,9 +25,13 @@
            [:input {:type "submit"}]]]
          [:a {:href "/log"} "Guestbook"]]))
 
-(defn greet [params]
+(defn record-name [params]
   (sql/insert! db :names {:name (:user_name params)})
-  (str "Hello, " (:user_name params)))
+  (assoc (redirect "/greet") :session {:user_name (:user_name params)}))
+
+(defn greet [session]
+  (html [:p "Hello, " (:user_name session)]
+        [:a {:href "/"} "Home"]))
 
 (defn show-log []
   (let [entries (sql/query db ["select * from names"])]
@@ -37,10 +43,11 @@
 
 (defroutes app-routes
   (GET "/" [] (ask-name))
-  (POST "/" {params :params} (greet params))
+  (POST "/" {params :params} (record-name params))
+  (GET "/greet" {session :session} (greet session))
   (GET "/log" []  (show-log))
   (route/resources "/")
   (route/not-found "Not Found"))
 
 (def app
-  (handler/site app-routes))
+  (wrap-session (handler/site app-routes)))
