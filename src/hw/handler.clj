@@ -20,7 +20,8 @@
           [:p "What is your name?"]
           [:form {:action "/" :method "POST"}
            [:input {:type "text" :name "user_name"}]
-           [:input {:type "submit"}]]]]))
+           [:input {:type "submit"}]]]
+         [:a {:href "/log"} "Guestbook"]]))
 
 (defn greet [params]
   (sql/insert! db :names {:name (:user_name params)})
@@ -31,7 +32,8 @@
     (html [:p "Here are people who stopped by:"]
           [:table
            [:tbody
-            (map (fn [e] [:tr [:td (:name e)]]) entries)]])))
+            (map (fn [e] [:tr [:td (:name e)]]) entries)]]
+          [:a {:href "/"} "Home"])))
 
 (defroutes app-routes
   (GET "/" [] (ask-name))
